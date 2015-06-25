@@ -63,8 +63,9 @@ class RallyStories:
                     points = self.getEstChange(artifact)
                     self.summary['IncompleteStories'] += 1
                     self.summary['IncompletePoints'] += points
-                self.summary['Stories'] += 1
-                self.summary['Points'] += points
+                if points > 0:
+                    self.summary['Stories'] += 1
+                    self.summary['Points'] += points
 
         # Write to DB
         if toWrite and artifact is not None:
