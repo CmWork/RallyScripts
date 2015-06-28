@@ -29,11 +29,13 @@ class RallyStories:
     def getEstChange(self, artifact):
         points = 0
         if artifact.PlanEstimate is not None:
+            points = artifact.PlanEstimate
+        if artifact.PlanEstimate == 0:
             if artifact.ScheduleState == 'Incomplete':
                 # Use revision history to get info
                 for rev in artifact.RevisionHistory.Revisions:
                     desc = rev.Description
-                    m = re.findall('(?<=PLAN\sESTIMATE\schanged\sfrom)*\[(\d)', desc)
+                    m = re.findall('(?:PLAN\sESTIMATE\schanged\sfrom\s\[)(\d)', desc)
                     if len(m) > 0:
                         return int(m[0])
         return points
