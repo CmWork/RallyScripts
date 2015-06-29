@@ -129,11 +129,11 @@ class RallyData:
                     if iterId not in iterDict:
                         iterDict[iterId] = dict()
                         iterDict[iterId]['UserCapacities'] = self.getUserIterCaps(iteration.UserIterationCapacities)
+                        iterDict[iterId]['NumDevs'] = iterDict[iterId]['UserCapacities']['NumDevs']
                         iterDict[iterId]['Project'] = task.Project.Name
                         iterDict[iterId]['Name'] = iteration.Name
                         iterDict[iterId]['StartDate'] = iteration.StartDate
                         iterDict[iterId]['EndDate'] = iteration.EndDate
-                        iterDict[iterId]['NumDevs'] = 77
                         iterDict[iterId]['Stories'] = 0
                         iterDict[iterId]['Points'] = 0
                         iterDict[iterId]['IncompleteStories'] = 0
@@ -207,7 +207,7 @@ class RallyData:
                 ave = 0
                 avc = 0
                 evc = 0
-                if t_act != 0:
+                if t_est != 0:
                     ave = t_act/t_est * 100
                 else:
                     ave = 0
@@ -261,22 +261,30 @@ class RallyData:
         return points
 
     def getUserIterCaps(self, uicList):
+        numDevs = 0
         uicDict = dict()
         for uic in uicList:
             try:
                 uname = uic.User.UserName.split('@')[0]
+                
+                # Count number of devs participating in this sprint
+                if uic.Capacity > 0:
+                    numDevs += 1
+
+                # Ignore dev if not queried for
                 if uname not in self.devList:
                     continue
                 uicDict[uname] = uic.Capacity
             except:
                 print "ERROR: UIC issue in " + uic.Iteration.Project.Name + ":" + uic.Iteration.Name
                 continue
+        uicDict['NumDevs'] = numDevs
         return uicDict
 
     def createTables(self):
         # lastSync should be the last completed iteration endDate
         self.cursor.execute("create table if not exists syncData(UserName integer UNIQUE, LastSync text)")
-        self.cursor.execute("create table if not exists iterSummary(IterID integer UNIQUE, IterName text, StartDate text, EndDate text, NUmDevs integer, Stories integer, IncompleteStories integer, IncompleteStoryPercent real, Points integer, IncompletePoints integer, IncompletePointPercent real)")
+        self.cursor.execute("create table if not exists iterSummary(IterID integer UNIQUE, IterName text, StartDate text, EndDate text, NumDevs integer, Stories integer, IncompleteStories integer, IncompleteStoryPercent real, Points integer, IncompletePoints integer, IncompletePointPercent real)")
         self.cursor.execute("create table if not exists userCapacity(IterID integer, UserID text, UserName text, Capacity integer, TotalActual real, TotalEstimate real, AERatio real, AENorm real, ACRatio real, ECRatio real, unique(IterID, UserID))")
         self.cursor.execute("create table if not exists userTasks(IterID integer, UserID text, IterName text, UserName text, TaskID integer UNIQUE, Estimate real, Actual real, TaskName text, State text, LastUpdateDate text, Project text, Artifact text, ArtifactName text)")
         self.conn.commit()
@@ -299,7 +307,7 @@ def main(argv):
 
     # DEBUGGING
     if devReportList is None:
-        devReportList = ["ben.yoshino","greg.kodama"]
+        devReportList = ["ben.yoshino","greg.kodama","greg.ofiesh","daniel.dubois","gayan.abeysundara","brandon.tom","felma.duque","kelli.sawai","kent.kanja","scott.shimokawa","rance.yamamoto"]
 
     conn = sqlite3.connect('RallyData.db')
     cursor = conn.cursor()
